@@ -66,7 +66,7 @@
         <div>
           <p class="text-teal-200 text-xs font-semibold">إدارة المحل والطلبات والديون</p>
           <h2 class="text-xl font-extrabold mt-0.5">أهلاً بك في نظام Baghdad Laundry</h2>
-          <p class="text-xs text-slate-200 mt-1">البيانات محفوظة محلياً على جهازك وتعمل مباشرة.</p>
+          <p class="text-xs text-slate-200 mt-1">البيانات وتسعيرة الخدمات محفوظة محلياً على جهازك.</p>
         </div>
         <button
           type="button"
@@ -213,48 +213,106 @@
     </div>
   </nav>
 
-  <div id="add-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl w-full max-w-md p-5 shadow-xl space-y-4">
+  <!-- نافذة إضافة وصل جديد -->
+  <div id="add-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl w-full max-w-xl p-4 sm:p-5 shadow-xl space-y-4 my-auto max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <h3 class="font-extrabold text-base text-slate-900">إضافة وصل جديد</h3>
-        <button type="button" onclick="closeAddModal()" class="text-slate-400 hover:text-slate-700">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            onclick="togglePriceSettings()"
+            class="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1"
+          >
+            <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-teal-700"></i>
+            <span>تثبيت الأسعار</span>
+          </button>
+          <button type="button" onclick="closeAddModal()" class="text-slate-400 hover:text-slate-700">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
       </div>
 
-      <form id="order-form" onsubmit="handleSaveOrder(event)" class="space-y-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">اسم الزبون</label>
-          <input id="inp-customer" type="text" required placeholder="مثال: أبو علي" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm" />
+      <!-- لوحة تثبيت وتعديل الأسعار الثابتة لكل قطعة وخدمة -->
+      <div id="price-settings-panel" class="hidden border border-teal-200 bg-teal-50/50 rounded-2xl p-3 space-y-2.5">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <p class="text-xs font-extrabold text-teal-950">جدول الأسعار الثابتة للقطع والخدمات</p>
+            <p class="text-[11px] text-slate-600">عدّل السعر مرة واحدة وسيظهر تلقائياً عند اختيار القطعة والخدمة</p>
+          </div>
+          <button
+            type="button"
+            onclick="addNewCatalogItem()"
+            class="bg-teal-700 hover:bg-teal-600 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 shrink-0"
+          >
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>قطعة جديدة</span>
+          </button>
+        </div>
+        <div id="catalog-editor-list" class="space-y-2 max-h-56 overflow-y-auto pr-0.5"></div>
+      </div>
+
+      <form id="order-form" onsubmit="handleSaveOrder(event)" class="space-y-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">اسم الزبون</label>
+            <input id="inp-customer" type="text" required placeholder="مثال: أبو علي" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">رقم الهاتف (اختياري للواتساب)</label>
+            <input id="inp-phone" type="tel" placeholder="07700000000" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm num-en" />
+          </div>
+        </div>
+
+        <!-- اختيار نوع القطعة + نوع الخدمة + العدد -->
+        <div class="border border-slate-200 rounded-2xl p-3 bg-slate-50/70 space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <p class="text-xs font-extrabold text-slate-800">القطع والخدمات في الوصل</p>
+              <p class="text-[11px] text-slate-500">اختر القطعة ونوع الخدمة والعدد ليحسب السعر تلقائياً</p>
+            </div>
+            <button
+              type="button"
+              onclick="addOrderLineRow()"
+              class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 shrink-0"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>إضافة قطعة</span>
+            </button>
+          </div>
+
+          <div id="order-lines-container" class="space-y-2"></div>
+        </div>
+
+        <!-- معاينة تفاصيل الوصل -->
+        <div class="bg-teal-50/70 border border-teal-200/80 rounded-xl p-2.5">
+          <p class="text-[11px] font-bold text-teal-900 mb-1">تفاصيل القطع التي ستظهر في الوصل:</p>
+          <p id="items-summary-preview" class="text-xs text-slate-700 leading-relaxed">لم يتم تحديد قطع بعد.</p>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">رقم الهاتف (اختياري للواتساب)</label>
-          <input id="inp-phone" type="tel" placeholder="07700000000 أو 9647700000000" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm num-en" />
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">تفاصيل الملابس / الخدمة</label>
-          <input id="inp-items" type="text" required placeholder="مثال: 3 دشداشة + بطانية غسل وكي" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm" />
+          <label class="block text-xs font-bold text-slate-700 mb-1">ملاحظة إضافية (اختياري)</label>
+          <input id="inp-note" type="text" oninput="updateOrderSummary()" placeholder="مثال: استلام عصر اليوم" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm" />
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">المبلغ الكلي (د.ع)</label>
-            <input id="inp-total" type="number" min="0" step="250" required oninput="updateRemainingPreview()" placeholder="10000" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm num-en" />
+            <input id="inp-total" type="number" min="0" step="250" required oninput="updateRemainingPreview()" placeholder="0" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold num-en bg-white" />
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">المدفوع (د.ع)</label>
-            <input id="inp-paid" type="number" min="0" step="250" required oninput="updateRemainingPreview()" placeholder="5000" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm num-en" />
+            <input id="inp-paid" type="number" min="0" step="250" required oninput="updateRemainingPreview()" placeholder="0" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm num-en bg-white" />
           </div>
         </div>
 
-        <div class="bg-slate-50 rounded-xl p-3 flex items-center justify-between text-xs">
+        <div class="bg-slate-100 rounded-xl p-3 flex items-center justify-between text-xs">
           <span class="text-slate-600 font-semibold">المتبقي (الدَين):</span>
           <span id="remaining-preview" class="font-extrabold text-amber-700 text-sm num-en">0 د.ع</span>
         </div>
 
-        <div class="flex gap-2 pt-2">
+        <div class="flex gap-2 pt-1">
           <button type="submit" class="flex-1 bg-teal-600 hover:bg-teal-500 text-white font-bold py-2.5 rounded-xl text-sm">
             حفظ الوصل
           </button>
@@ -270,9 +328,47 @@
 
   <script>
     const SHOP_WHATSAPP_NUMBER = "9647000000000";
-    const STORAGE_KEY = "baghdad_laundry_orders_v1";
+    const STORAGE_KEY = "baghdad_laundry_orders_v3";
+    const LEGACY_STORAGE_KEYS = ["baghdad_laundry_orders_v2", "baghdad_laundry_orders_v1"];
+    const CATALOG_KEY = "baghdad_laundry_catalog_v1";
 
+    const SERVICE_TYPES = [
+      { key: "wash_iron", label: "غسل وكوي" },
+      { key: "iron_only", label: "كوي فقط" },
+      { key: "wash_only", label: "غسل فقط" }
+    ];
+
+    const DEFAULT_CATALOG = [
+      {
+        id: "dishdasha",
+        name: "دشداشة",
+        prices: { wash_iron: 2000, iron_only: 1000, wash_only: 1500 }
+      },
+      {
+        id: "shirt",
+        name: "قميص",
+        prices: { wash_iron: 1500, iron_only: 1000, wash_only: 1000 }
+      },
+      {
+        id: "trousers",
+        name: "بنطلون",
+        prices: { wash_iron: 1500, iron_only: 1000, wash_only: 1000 }
+      },
+      {
+        id: "abaya",
+        name: "عباية",
+        prices: { wash_iron: 2500, iron_only: 1500, wash_only: 2000 }
+      },
+      {
+        id: "blanket",
+        name: "بطانية",
+        prices: { wash_iron: 6000, iron_only: 2500, wash_only: 5000 }
+      }
+    ];
+
+    let catalog = [];
     let orders = [];
+    let lineIdCounter = 0;
 
     function escapeHTML(str) {
       return String(str || "")
@@ -283,9 +379,55 @@
         .replace(/'/g, "&#39;");
     }
 
+    function normalizeCatalog(list) {
+      if (!Array.isArray(list) || !list.length) {
+        return DEFAULT_CATALOG.map((item) => ({
+          id: item.id,
+          name: item.name,
+          prices: { ...item.prices }
+        }));
+      }
+      return list.map((item, idx) => ({
+        id: item.id || `item_${idx}_${Date.now()}`,
+        name: String(item.name || "قطعة").trim() || "قطعة",
+        prices: {
+          wash_iron: Math.max(0, Number(item.prices?.wash_iron) || 0),
+          iron_only: Math.max(0, Number(item.prices?.iron_only) || 0),
+          wash_only: Math.max(0, Number(item.prices?.wash_only) || 0)
+        }
+      }));
+    }
+
+    function loadCatalog() {
+      try {
+        const raw = localStorage.getItem(CATALOG_KEY);
+        catalog = normalizeCatalog(raw ? JSON.parse(raw) : null);
+      } catch (err) {
+        console.error("Failed to load catalog:", err);
+        catalog = normalizeCatalog(null);
+      }
+    }
+
+    function saveCatalog() {
+      try {
+        localStorage.setItem(CATALOG_KEY, JSON.stringify(catalog));
+      } catch (err) {
+        console.error("Failed to save catalog:", err);
+      }
+    }
+
     function loadOrders() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        let raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          for (const legacyKey of LEGACY_STORAGE_KEYS) {
+            const legacyRaw = localStorage.getItem(legacyKey);
+            if (legacyRaw) {
+              raw = legacyRaw;
+              break;
+            }
+          }
+        }
         orders = raw ? JSON.parse(raw) : [];
         if (!Array.isArray(orders)) orders = [];
       } catch (err) {
@@ -360,7 +502,7 @@
         `مرحباً ${order.customer} 👋\n` +
         `تفاصيل وصلك من *مغسلة بغداد (Baghdad Laundry)*:\n` +
         `• رقم الوصل: #${order.receiptNo}\n` +
-        `• الخدمات: ${order.items}\n` +
+        `• التفاصيل:\n${order.items}\n` +
         `• الكلي: ${formatIQD(order.total)}\n` +
         `• المدفوع: ${formatIQD(order.paid)}\n` +
         `• المتبقي: ${formatIQD(remaining)}`;
@@ -393,9 +535,311 @@
       renderAll();
     }
 
+    function getCatalogPrice(itemId, serviceKey) {
+      const found = catalog.find((c) => c.id === itemId) || catalog[0];
+      if (!found) return 0;
+      return Math.max(0, Number(found.prices?.[serviceKey]) || 0);
+    }
+
+    function getServiceLabel(serviceKey) {
+      return SERVICE_TYPES.find((s) => s.key === serviceKey)?.label || "غسل وكوي";
+    }
+
+    function togglePriceSettings() {
+      const panel = document.getElementById("price-settings-panel");
+      panel.classList.toggle("hidden");
+      if (!panel.classList.contains("hidden")) {
+        renderCatalogEditor();
+      }
+    }
+
+    function renderCatalogEditor() {
+      const editorList = document.getElementById("catalog-editor-list");
+      editorList.innerHTML = catalog
+        .map(
+          (item, idx) => `
+            <div class="bg-white border border-slate-200 rounded-xl p-2.5 space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <input
+                  type="text"
+                  value="${escapeHTML(item.name)}"
+                  oninput="updateCatalogItem(${idx}, 'name', this.value)"
+                  placeholder="اسم القطعة"
+                  class="flex-1 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-extrabold text-slate-800"
+                />
+                ${catalog.length > 1 ? `
+                  <button
+                    type="button"
+                    onclick="removeCatalogItem(${idx})"
+                    class="text-rose-500 hover:bg-rose-50 p-1 rounded-lg"
+                    title="حذف القطعة"
+                  >
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                ` : ""}
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-[11px]">
+                <div>
+                  <span class="text-slate-500 block mb-0.5">غسل وكوي</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="250"
+                    value="${item.prices.wash_iron}"
+                    oninput="updateCatalogItem(${idx}, 'wash_iron', this.value)"
+                    class="w-full border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold num-en"
+                  />
+                </div>
+                <div>
+                  <span class="text-slate-500 block mb-0.5">كوي فقط</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="250"
+                    value="${item.prices.iron_only}"
+                    oninput="updateCatalogItem(${idx}, 'iron_only', this.value)"
+                    class="w-full border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold num-en"
+                  />
+                </div>
+                <div>
+                  <span class="text-slate-500 block mb-0.5">غسل فقط</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="250"
+                    value="${item.prices.wash_only}"
+                    oninput="updateCatalogItem(${idx}, 'wash_only', this.value)"
+                    class="w-full border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold num-en"
+                  />
+                </div>
+              </div>
+            </div>
+          `
+        )
+        .join("");
+
+      if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+      }
+    }
+
+    function updateCatalogItem(index, field, value) {
+      const target = catalog[index];
+      if (!target) return;
+      if (field === "name") {
+        target.name = String(value || "").trim() || "قطعة";
+      } else {
+        target.prices[field] = Math.max(0, Number(value) || 0);
+      }
+      saveCatalog();
+      syncAllLineSelectsAndPrices();
+    }
+
+    function addNewCatalogItem() {
+      catalog.push({
+        id: `custom_${Date.now()}`,
+        name: "قطعة جديدة",
+        prices: { wash_iron: 2000, iron_only: 1000, wash_only: 1500 }
+      });
+      saveCatalog();
+      renderCatalogEditor();
+      syncAllLineSelectsAndPrices();
+    }
+
+    function removeCatalogItem(index) {
+      if (catalog.length <= 1) return;
+      catalog.splice(index, 1);
+      saveCatalog();
+      renderCatalogEditor();
+      syncAllLineSelectsAndPrices();
+    }
+
+    function buildItemOptionsHTML(selectedId) {
+      return catalog
+        .map(
+          (item) =>
+            `<option value="${escapeHTML(item.id)}" ${item.id === selectedId ? "selected" : ""}>${escapeHTML(item.name)}</option>`
+        )
+        .join("");
+    }
+
+    function buildServiceOptionsHTML(selectedService) {
+      return SERVICE_TYPES.map(
+        (srv) => `<option value="${srv.key}" ${srv.key === selectedService ? "selected" : ""}>${srv.label}</option>`
+      ).join("");
+    }
+
+    function buildOrderLineHTML(rowId, itemId, serviceKey, qty, unitPrice, canRemove) {
+      return `
+        <div id="${rowId}" class="bg-white border border-slate-200 rounded-xl p-2.5 space-y-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <span class="text-[11px] text-slate-500 block mb-0.5">نوع القطعة</span>
+              <select
+                onchange="onOrderLineSelectionChange('${rowId}')"
+                class="line-item w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold bg-white text-slate-800"
+              >
+                ${buildItemOptionsHTML(itemId)}
+              </select>
+            </div>
+            <div>
+              <span class="text-[11px] text-slate-500 block mb-0.5">نوع الخدمة</span>
+              <select
+                onchange="onOrderLineSelectionChange('${rowId}')"
+                class="line-service w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold bg-white text-teal-800"
+              >
+                ${buildServiceOptionsHTML(serviceKey)}
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[11px] text-slate-500">العدد:</span>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value="${Number(qty) || 0}"
+                oninput="updateOrderSummary()"
+                class="line-qty w-16 border border-teal-300 rounded-lg px-2 py-1 text-xs font-extrabold num-en text-center text-teal-900"
+              />
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <span class="text-[11px] text-slate-500">سعر القطعة:</span>
+              <input
+                type="number"
+                min="0"
+                step="250"
+                value="${Number(unitPrice) || 0}"
+                oninput="updateOrderSummary()"
+                class="line-price w-24 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold num-en text-center"
+              />
+            </div>
+
+            ${canRemove ? `
+              <button
+                type="button"
+                onclick="removeOrderLineRow('${rowId}')"
+                title="حذف السطر"
+                class="text-rose-500 hover:bg-rose-50 p-1 rounded-lg"
+              >
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            ` : `<span class="w-6"></span>`}
+          </div>
+        </div>
+      `;
+    }
+
+    function addOrderLineRow(initialQty = 1) {
+      lineIdCounter += 1;
+      const rowId = `order-line-${lineIdCounter}`;
+      const defaultItem = catalog[0];
+      const defaultService = "wash_iron";
+      const defaultPrice = defaultItem ? getCatalogPrice(defaultItem.id, defaultService) : 0;
+      const container = document.getElementById("order-lines-container");
+      const canRemove = container.children.length > 0;
+      container.insertAdjacentHTML(
+        "beforeend",
+        buildOrderLineHTML(rowId, defaultItem?.id || "", defaultService, initialQty, defaultPrice, canRemove)
+      );
+      if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+      }
+      updateOrderSummary();
+    }
+
+    function removeOrderLineRow(rowId) {
+      const el = document.getElementById(rowId);
+      if (el) el.remove();
+      updateOrderSummary();
+    }
+
+    function onOrderLineSelectionChange(rowId) {
+      const row = document.getElementById(rowId);
+      if (!row) return;
+      const itemId = row.querySelector(".line-item")?.value || "";
+      const serviceKey = row.querySelector(".line-service")?.value || "wash_iron";
+      const priceInput = row.querySelector(".line-price");
+      const qtyInput = row.querySelector(".line-qty");
+      if (priceInput) {
+        priceInput.value = getCatalogPrice(itemId, serviceKey);
+      }
+      if (qtyInput && (Number(qtyInput.value) || 0) === 0) {
+        qtyInput.value = 1;
+      }
+      updateOrderSummary();
+    }
+
+    function syncAllLineSelectsAndPrices() {
+      const rows = Array.from(document.querySelectorAll("#order-lines-container > div"));
+      rows.forEach((row) => {
+        const itemSelect = row.querySelector(".line-item");
+        const serviceSelect = row.querySelector(".line-service");
+        const priceInput = row.querySelector(".line-price");
+        if (!itemSelect || !serviceSelect || !priceInput) return;
+
+        const currentItemId = itemSelect.value;
+        const currentService = serviceSelect.value || "wash_iron";
+        const stillExists = catalog.some((c) => c.id === currentItemId);
+        const nextItemId = stillExists ? currentItemId : (catalog[0]?.id || "");
+
+        itemSelect.innerHTML = buildItemOptionsHTML(nextItemId);
+        serviceSelect.innerHTML = buildServiceOptionsHTML(currentService);
+        priceInput.value = getCatalogPrice(nextItemId, currentService);
+      });
+      updateOrderSummary();
+    }
+
+    function getOrderLinesData() {
+      const rows = Array.from(document.querySelectorAll("#order-lines-container > div"));
+      const lines = [];
+      let totalAmount = 0;
+
+      rows.forEach((row) => {
+        const itemId = row.querySelector(".line-item")?.value || "";
+        const serviceKey = row.querySelector(".line-service")?.value || "wash_iron";
+        const qty = Math.max(0, parseInt(row.querySelector(".line-qty")?.value, 10) || 0);
+        const unitPrice = Math.max(0, Number(row.querySelector(".line-price")?.value) || 0);
+        const itemName = catalog.find((c) => c.id === itemId)?.name || "قطعة";
+        const serviceLabel = getServiceLabel(serviceKey);
+
+        if (qty > 0) {
+          const lineTotal = unitPrice * qty;
+          totalAmount += lineTotal;
+          lines.push(`${itemName} (${serviceLabel}) × ${qty} (${formatIQD(lineTotal)})`);
+        }
+      });
+
+      return { lines, totalAmount };
+    }
+
+    function updateOrderSummary() {
+      const { lines, totalAmount } = getOrderLinesData();
+      const note = (document.getElementById("inp-note")?.value || "").trim();
+      const summaryEl = document.getElementById("items-summary-preview");
+
+      if (lines.length) {
+        summaryEl.innerHTML =
+          lines.map((l) => `• ${escapeHTML(l)}`).join("<br>") +
+          (note ? `<br><span class="text-slate-500">ملاحظة: ${escapeHTML(note)}</span>` : "");
+      } else {
+        summaryEl.textContent = note ? `ملاحظة: ${note}` : "لم يتم تحديد قطع بعد.";
+      }
+
+      document.getElementById("inp-total").value = totalAmount;
+      updateRemainingPreview();
+    }
+
     function openAddModal() {
       document.getElementById("order-form").reset();
+      document.getElementById("inp-paid").value = 0;
       document.getElementById("remaining-preview").textContent = "0 د.ع";
+      document.getElementById("price-settings-panel").classList.add("hidden");
+      document.getElementById("order-lines-container").innerHTML = "";
+      addOrderLineRow(1);
       document.getElementById("add-modal").classList.remove("hidden");
     }
 
@@ -414,12 +858,18 @@
       e.preventDefault();
       const customer = document.getElementById("inp-customer").value.trim();
       const phone = document.getElementById("inp-phone").value.trim();
-      const items = document.getElementById("inp-items").value.trim();
+      const note = (document.getElementById("inp-note")?.value || "").trim();
+      const { lines } = getOrderLinesData();
       const total = Math.max(0, Number(document.getElementById("inp-total").value) || 0);
       const paid = Math.max(0, Number(document.getElementById("inp-paid").value) || 0);
 
-      if (!customer || !items) {
-        showToast("يرجى إدخال اسم الزبون وتفاصيل الخدمة");
+      let itemsText = lines.join(" | ");
+      if (note) {
+        itemsText = itemsText ? `${itemsText} — ملاحظة: ${note}` : `ملاحظة: ${note}`;
+      }
+
+      if (!customer || !itemsText) {
+        showToast("يرجى إدخال اسم الزبون وتحديد قطعة واحدة على الأقل");
         return;
       }
 
@@ -438,7 +888,7 @@
         createdAt: new Date().toLocaleString("ar-IQ"),
         customer,
         phone,
-        items,
+        items: itemsText,
         total,
         paid
       };
@@ -469,6 +919,15 @@
       showToast("تم حذف الوصل");
     }
 
+    function formatOrderItemsForCard(rawItems) {
+      const parts = String(rawItems || "")
+        .split(" | ")
+        .map((p) => p.trim())
+        .filter(Boolean);
+      if (!parts.length) return "";
+      return parts.map((p) => `• ${escapeHTML(p)}`).join("<br>");
+    }
+
     function renderOrderCard(order) {
       const total = Number(order.total) || 0;
       const paid = Number(order.paid) || 0;
@@ -483,10 +942,10 @@
                 <span class="text-xs font-extrabold bg-slate-100 text-slate-800 px-2 py-0.5 rounded-lg num-en">#${escapeHTML(order.receiptNo)}</span>
                 <h4 class="font-extrabold text-slate-900">${escapeHTML(order.customer)}</h4>
               </div>
-              <p class="text-xs text-slate-600 mt-1">${escapeHTML(order.items)}</p>
-              <p class="text-[11px] text-slate-400 mt-0.5 num-en">${escapeHTML(order.createdAt || order.dateKey)}</p>
+              <p class="text-xs text-slate-700 mt-1.5 leading-relaxed">${formatOrderItemsForCard(order.items)}</p>
+              <p class="text-[11px] text-slate-400 mt-1 num-en">${escapeHTML(order.createdAt || order.dateKey)}</p>
             </div>
-            <span class="text-xs font-bold px-2.5 py-1 rounded-full ${remaining > 0 ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}">
+            <span class="text-xs font-bold px-2.5 py-1 rounded-full shrink-0 ${remaining > 0 ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}">
               ${remaining > 0 ? `متبقي: ${formatIQD(remaining)}` : "مدفوع"}
             </span>
           </div>
@@ -647,6 +1106,7 @@
           day: "numeric"
         });
       }
+      loadCatalog();
       loadOrders();
       renderAll();
     });
