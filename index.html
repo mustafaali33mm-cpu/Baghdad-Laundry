@@ -267,11 +267,21 @@
   </div>
 
   <div id="toast" class="hidden fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg"></div>
+
   <script>
     const SHOP_WHATSAPP_NUMBER = "9647000000000";
     const STORAGE_KEY = "baghdad_laundry_orders_v1";
 
     let orders = [];
+
+    function escapeHTML(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
 
     function loadOrders() {
       try {
@@ -285,7 +295,14 @@
     }
 
     function saveOrders() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+        return true;
+      } catch (err) {
+        console.error("Failed to save orders:", err);
+        showToast("تعذر الحفظ محلياً، تحقق من إعدادات المتصفح");
+        return false;
+      }
     }
 
     function showToast(message) {
@@ -406,6 +423,11 @@
         return;
       }
 
+      if (paid > total) {
+        showToast("المبلغ المدفوع أكبر من المبلغ الكلي");
+        return;
+      }
+
       const nextReceiptNo =
         orders.reduce((max, item) => Math.max(max, Number(item.receiptNo) || 100), 100) + 1;
 
@@ -422,7 +444,10 @@
       };
 
       orders.unshift(newOrder);
-      saveOrders();
+      if (!saveOrders()) {
+        orders.shift();
+        return;
+      }
       closeAddModal();
       renderAll();
       showToast(`تم حفظ الوصل #${nextReceiptNo}`);
@@ -444,21 +469,22 @@
       showToast("تم حذف الوصل");
     }
 
-    function renderOrderCard(order, showSettleButton = false) {
+    function renderOrderCard(order) {
       const total = Number(order.total) || 0;
       const paid = Number(order.paid) || 0;
       const remaining = Math.max(0, total - paid);
+      const safeId = escapeHTML(order.id);
 
       return `
         <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
           <div class="flex items-start justify-between gap-2">
             <div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-extrabold bg-slate-100 text-slate-800 px-2 py-0.5 rounded-lg num-en">#${order.receiptNo}</span>
-                <h4 class="font-extrabold text-slate-900">${order.customer}</h4>
+                <span class="text-xs font-extrabold bg-slate-100 text-slate-800 px-2 py-0.5 rounded-lg num-en">#${escapeHTML(order.receiptNo)}</span>
+                <h4 class="font-extrabold text-slate-900">${escapeHTML(order.customer)}</h4>
               </div>
-              <p class="text-xs text-slate-600 mt-1">${order.items}</p>
-              <p class="text-[11px] text-slate-400 mt-0.5 num-en">${order.createdAt || order.dateKey}</p>
+              <p class="text-xs text-slate-600 mt-1">${escapeHTML(order.items)}</p>
+              <p class="text-[11px] text-slate-400 mt-0.5 num-en">${escapeHTML(order.createdAt || order.dateKey)}</p>
             </div>
             <span class="text-xs font-bold px-2.5 py-1 rounded-full ${remaining > 0 ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}">
               ${remaining > 0 ? `متبقي: ${formatIQD(remaining)}` : "مدفوع"}
@@ -473,17 +499,17 @@
           <div class="flex flex-wrap items-center gap-2 pt-1">
             <button
               type="button"
-              onclick="sendOrderWhatsApp('${order.id}')"
+              onclick="sendOrderWhatsApp('${safeId}')"
               class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1"
             >
               <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
               <span>واتساب</span>
             </button>
 
-            ${(remaining > 0 || showSettleButton) && remaining > 0 ? `
+            ${remaining > 0 ? `
               <button
                 type="button"
-                onclick="settleOrderDebt('${order.id}')"
+                onclick="settleOrderDebt('${safeId}')"
                 class="bg-amber-500 hover:bg-amber-400 text-white text-xs font-bold px-3 py-1.5 rounded-xl"
               >
                 تسديد المتبقي
@@ -492,7 +518,7 @@
 
             <button
               type="button"
-              onclick="deleteOrder('${order.id}')"
+              onclick="deleteOrder('${safeId}')"
               class="mr-auto text-rose-600 hover:bg-rose-50 text-xs font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1"
             >
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -564,7 +590,7 @@
 
       const debtOrders = orders.filter((o) => Math.max(0, (Number(o.total) || 0) - (Number(o.paid) || 0)) > 0);
       document.getElementById("debts-list").innerHTML = debtOrders.length
-        ? debtOrders.map((o) => renderOrderCard(o, true)).join("")
+        ? debtOrders.map((o) => renderOrderCard(o)).join("")
         : `<div class="bg-white rounded-2xl p-6 text-center text-xs text-slate-400 border border-slate-200">لا توجد ديون حالياً.</div>`;
 
       const map = new Map();
@@ -573,7 +599,7 @@
         const total = Number(o.total) || 0;
         const paid = Number(o.paid) || 0;
         const rem = Math.max(0, total - paid);
-                if (!map.has(key)) {
+        if (!map.has(key)) {
           map.set(key, { customer: o.customer, phone: o.phone || "", count: 0, debt: 0 });
         }
         const entry = map.get(key);
@@ -588,13 +614,13 @@
               (c) => `
                 <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between gap-3">
                   <div>
-                    <h4 class="font-extrabold text-slate-900">${c.customer}</h4>
-                    <p class="text-xs text-slate-500 num-en">${c.phone || "بدون رقم هاتف"} • ${c.count} وصل</p>
+                    <h4 class="font-extrabold text-slate-900">${escapeHTML(c.customer)}</h4>
+                    <p class="text-xs text-slate-500 num-en">${escapeHTML(c.phone || "بدون رقم هاتف")} • ${c.count} وصل</p>
                     ${c.debt > 0 ? `<p class="text-xs font-bold text-amber-700 mt-1 num-en">عليه ديون: ${formatIQD(c.debt)}</p>` : ""}
                   </div>
                   <button
                     type="button"
-                    onclick="openWhatsApp('${c.phone}', 'مرحباً ${c.customer} من مغسلة بغداد (Baghdad Laundry)')"
+                    onclick="openWhatsApp('${escapeHTML(c.phone)}', 'مرحباً ${escapeHTML(c.customer)} من مغسلة بغداد (Baghdad Laundry)')"
                     class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shrink-0"
                   >
                     <i data-lucide="message-circle" class="w-4 h-4"></i>
@@ -619,12 +645,11 @@
           year: "numeric",
           month: "long",
           day: "numeric"
-        });    }
-    loadOrders();
-    renderAll();
-  });
-</script>
+        });
+      }
+      loadOrders();
+      renderAll();
+    });
+  </script>
 </body>
 </html>
-
-
