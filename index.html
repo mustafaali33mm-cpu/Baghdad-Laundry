@@ -141,6 +141,8 @@
           class="border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
         >
           <option value="all">كل الوصولات</option>
+          <option value="ready">الطلبات الجاهزة</option>
+          <option value="pending">قيد التجهيز</option>
           <option value="debt">عليها ديون فقط</option>
           <option value="paid">مدفوعة بالكامل</option>
         </select>
@@ -242,7 +244,7 @@
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">رقم الهاتف (اختياري للواتساب)</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">رقم الهاتف (لتنبيه الطلب جاهز)</label>
             <input id="inp-phone" type="tel" placeholder="07700000000" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm num-en" />
           </div>
         </div>
@@ -311,18 +313,32 @@
     </div>
   </div>
 
-  <!-- نافذة معاينة ومشاركة صورة الوصل -->
+  <!-- نافذة معاينة ومشاركة صورة الوصل + تنبيه الطلب جاهز -->
   <div id="receipt-image-modal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl w-full max-w-md p-4 sm:p-5 shadow-xl space-y-3.5 my-auto max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-        <h3 class="font-extrabold text-sm text-slate-900">صورة الوصل • مكوى بغداد</h3>
+        <h3 id="receipt-modal-title" class="font-extrabold text-sm text-slate-900">صورة الوصل • مكوى بغداد</h3>
         <button type="button" onclick="closeReceiptImageModal()" class="text-slate-400 hover:text-slate-700">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
+      <div id="ready-message-box" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 space-y-1.5">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[11px] font-extrabold text-emerald-900">رسالة جاهزية الطلب للزبون:</span>
+          <button
+            type="button"
+            onclick="copyReadyMessage()"
+            class="text-[11px] font-bold text-emerald-700 hover:underline"
+          >
+            نسخ النص
+          </button>
+        </div>
+        <p id="ready-message-text" class="text-xs text-slate-800 whitespace-pre-line leading-relaxed"></p>
+      </div>
+
       <div class="bg-slate-100 rounded-xl p-2 flex items-center justify-center">
-        <img id="receipt-preview-img" alt="صورة الوصل" class="max-h-96 rounded-lg shadow border border-slate-200 bg-white" />
+        <img id="receipt-preview-img" alt="صورة الوصل" class="max-h-80 rounded-lg shadow border border-slate-200 bg-white" />
       </div>
 
       <div class="flex flex-wrap gap-2 pt-1">
@@ -333,6 +349,15 @@
         >
           <i data-lucide="share-2" class="w-4 h-4"></i>
           <span>مشاركة الصورة</span>
+        </button>
+
+        <button
+          type="button"
+          id="btn-open-customer-wa"
+          class="hidden bg-teal-700 hover:bg-teal-600 text-white text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5"
+        >
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          <span>مراسلة الرقم</span>
         </button>
 
         <button
@@ -394,6 +419,7 @@
     let editingOrderId = null;
     let isAutoSyncingItems = true;
     let currentGeneratedImage = { blob: null, dataUrl: "", fileName: "receipt.png" };
+    let currentReadyText = "";
 
     function escapeHTML(str) {
       return String(str || "")
@@ -515,6 +541,18 @@
       window.open(url, "_blank", "noopener,noreferrer");
     }
 
+    function buildReadyMessage(order) {
+      const remaining = Math.max(0, (Number(order.total) || 0) - (Number(order.paid) || 0));
+      return (
+        `مرحباً ${order.customer} 👋\n` +
+        `ملابسك في *مكوى بغداد* صارت جاهزة للاستلام ✅\n` +
+        `• رقم الوصل: #${order.receiptNo}\n` +
+        `• الكلي: ${formatIQD(order.total)}\n` +
+        `• المدفوع: ${formatIQD(order.paid)}\n` +
+        `• المتبقي: ${formatIQD(remaining)}`
+      );
+    }
+
     function sendOrderWhatsApp(orderId) {
       const order = orders.find((o) => o.id === orderId);
       if (!order) return;
@@ -575,11 +613,9 @@
       canvas.width = width;
       canvas.height = height;
 
-      // خلفية البطاقة
       ctx.fillStyle = "#f8fafc";
       ctx.fillRect(0, 0, width, height);
 
-      // إطار خارجي
       ctx.fillStyle = "#ffffff";
       ctx.strokeStyle = "#cbd5e1";
       ctx.lineWidth = 3;
@@ -588,7 +624,6 @@
       ctx.fill();
       ctx.stroke();
 
-      // شريط الهوية العلوي - مكوى بغداد
       const headerGrad = ctx.createLinearGradient(width - 24, 24, 24, 155);
       headerGrad.addColorStop(0, "#0f766e");
       headerGrad.addColorStop(1, "#0f172a");
@@ -605,14 +640,13 @@
 
       ctx.fillStyle = "#99f6e4";
       ctx.font = "700 20px 'Cairo', sans-serif";
-      ctx.fillText("وصل استلام وتسليم الملابس", width - 54, 122);
+      ctx.fillText(order.isReady ? "الطلب جاهز للاستلام • مكوى بغداد" : "وصل استلام وتسليم الملابس", width - 54, 122);
 
       ctx.textAlign = "left";
       ctx.fillStyle = "#ffffff";
       ctx.font = "800 28px 'Plus Jakarta Sans', 'Cairo', sans-serif";
       ctx.fillText(`#${order.receiptNo}`, 54, 92);
 
-      // معلومات الزبون والتاريخ
       ctx.textAlign = "right";
       ctx.fillStyle = "#0f172a";
       ctx.font = "800 24px 'Cairo', sans-serif";
@@ -625,7 +659,6 @@
       }
       ctx.fillText(`التاريخ: ${order.createdAt || order.dateKey}`, width - 54, order.phone ? 274 : 238);
 
-      // صندوق التفاصيل
       const boxTop = order.phone ? 302 : 268;
       ctx.fillStyle = "#f1f5f9";
       ctx.strokeStyle = "#e2e8f0";
@@ -645,7 +678,6 @@
         ctx.fillText(lineText, width - 68, boxTop + 70 + idx * 36);
       });
 
-      // ملخص الحساب
       const summaryTop = boxTop + detailsHeight + 24;
 
       ctx.fillStyle = "#0f172a";
@@ -698,9 +730,47 @@
       }
     }
 
-    async function shareOrDownloadReceiptImage(order) {
+    function copyReadyMessage() {
+      if (!currentReadyText) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(currentReadyText).then(() => {
+          showToast("تم نسخ رسالة الطلب جاهز");
+        }).catch(() => {
+          showToast("تعذر النسخ التلقائي");
+        });
+      }
+    }
+
+    async function shareOrDownloadReceiptImage(order, options = {}) {
+      const isReadyAlert = Boolean(options.isReadyAlert);
       const generated = await buildReceiptImageData(order);
       currentGeneratedImage = generated;
+
+      const titleEl = document.getElementById("receipt-modal-title");
+      if (titleEl) {
+        titleEl.textContent = isReadyAlert
+          ? `الطلب جاهز • وصل #${order.receiptNo} • مكوى بغداد`
+          : `صورة الوصل • مكوى بغداد`;
+      }
+
+      const readyBox = document.getElementById("ready-message-box");
+      const readyTextEl = document.getElementById("ready-message-text");
+      const waBtn = document.getElementById("btn-open-customer-wa");
+
+      if (isReadyAlert) {
+        currentReadyText = buildReadyMessage(order);
+        if (readyBox) readyBox.classList.remove("hidden");
+        if (readyTextEl) readyTextEl.textContent = currentReadyText;
+        if (waBtn) {
+          const hasPhone = Boolean(formatPhoneForWhatsApp(order.phone));
+          waBtn.classList.toggle("hidden", !hasPhone);
+          waBtn.onclick = () => openWhatsApp(order.phone, currentReadyText);
+        }
+      } else {
+        currentReadyText = "";
+        if (readyBox) readyBox.classList.add("hidden");
+        if (waBtn) waBtn.classList.add("hidden");
+      }
 
       const previewImg = document.getElementById("receipt-preview-img");
       if (previewImg) previewImg.src = generated.dataUrl;
@@ -715,6 +785,10 @@
         };
       }
 
+      const shareText = isReadyAlert
+        ? `مرحباً ${order.customer}، ملابسك في مكوى بغداد جاهزة للاستلام (وصل #${order.receiptNo})`
+        : `وصل #${order.receiptNo} - مكوى بغداد (${order.customer})`;
+
       if (shareBtn) {
         shareBtn.onclick = async () => {
           if (generated.blob && navigator.canShare && typeof File !== "undefined") {
@@ -723,7 +797,7 @@
               try {
                 await navigator.share({
                   title: `وصل مكوى بغداد #${order.receiptNo}`,
-                  text: `وصل #${order.receiptNo} - مكوى بغداد (${order.customer})`,
+                  text: shareText,
                   files: [file]
                 });
                 return;
@@ -748,7 +822,7 @@
           try {
             await navigator.share({
               title: `وصل مكوى بغداد #${order.receiptNo}`,
-              text: `وصل #${order.receiptNo} - مكوى بغداد (${order.customer})`,
+              text: shareText,
               files: [file]
             });
           } catch (err) {
@@ -760,10 +834,26 @@
       }
     }
 
+    async function markOrderReadyAndNotify(orderId) {
+      const target = orders.find((o) => o.id === orderId);
+      if (!target) return;
+
+      if (!formatPhoneForWhatsApp(target.phone)) {
+        showToast("هذا الوصل لا يحتوي على رقم هاتف للزبون");
+      }
+
+      target.isReady = true;
+      target.readyAt = new Date().toLocaleString("ar-IQ");
+      saveOrders();
+      renderAll();
+
+      await shareOrDownloadReceiptImage(target, { isReadyAlert: true });
+    }
+
     async function openOrderReceiptImage(orderId) {
       const order = orders.find((o) => o.id === orderId);
       if (!order) return;
-      await shareOrDownloadReceiptImage(order);
+      await shareOrDownloadReceiptImage(order, { isReadyAlert: false });
     }
 
     function closeReceiptImageModal() {
@@ -1239,7 +1329,8 @@
         phone,
         items: itemsText,
         total,
-        paid
+        paid,
+        isReady: false
       };
 
       orders.unshift(newOrder);
@@ -1282,14 +1373,19 @@
       const paid = Number(order.paid) || 0;
       const remaining = Math.max(0, total - paid);
       const safeId = escapeHTML(order.id);
+      const isReady = Boolean(order.isReady);
 
       return `
         <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
           <div class="flex items-start justify-between gap-2">
             <div>
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2">
                 <span class="text-xs font-extrabold bg-slate-100 text-slate-800 px-2 py-0.5 rounded-lg num-en">#${escapeHTML(order.receiptNo)}</span>
                 <h4 class="font-extrabold text-slate-900">${escapeHTML(order.customer)}</h4>
+                ${order.phone ? `<span class="text-[11px] text-slate-500 num-en">${escapeHTML(order.phone)}</span>` : ""}
+                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full ${isReady ? "bg-teal-100 text-teal-800" : "bg-slate-100 text-slate-600"}">
+                  ${isReady ? "الطلب جاهز" : "قيد التجهيز"}
+                </span>
               </div>
               <p class="text-xs text-slate-700 mt-1.5 leading-relaxed">${formatOrderItemsForCard(order.items)}</p>
               <p class="text-[11px] text-slate-400 mt-1 num-en">${escapeHTML(order.createdAt || order.dateKey)}</p>
@@ -1307,20 +1403,20 @@
           <div class="flex flex-wrap items-center gap-2 pt-1">
             <button
               type="button"
+              onclick="markOrderReadyAndNotify('${safeId}')"
+              class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1"
+            >
+              <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+              <span>${isReady ? "إعادة إرسال (جاهز)" : "الطلب جاهز"}</span>
+            </button>
+
+            <button
+              type="button"
               onclick="openOrderReceiptImage('${safeId}')"
               class="bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1"
             >
               <i data-lucide="image" class="w-3.5 h-3.5"></i>
               <span>صورة وصل</span>
-            </button>
-
-            <button
-              type="button"
-              onclick="sendOrderWhatsApp('${safeId}')"
-              class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1"
-            >
-              <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
-              <span>واتساب</span>
             </button>
 
             <button
@@ -1399,6 +1495,8 @@
         const total = Number(o.total) || 0;
         const paid = Number(o.paid) || 0;
         const rem = Math.max(0, total - paid);
+        if (filterType === "ready" && !o.isReady) return false;
+        if (filterType === "pending" && o.isReady) return false;
         if (filterType === "debt" && rem <= 0) return false;
         if (filterType === "paid" && rem > 0) return false;
         if (!q) return true;
