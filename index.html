@@ -186,11 +186,11 @@
     </div>
   </nav>
 
-  <!-- نافذة إضافة وصل جديد -->
+  <!-- نافذة إضافة / تعديل وصل -->
   <div id="add-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl w-full max-w-xl p-4 sm:p-5 shadow-xl space-y-4 my-auto max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="font-extrabold text-base text-slate-900">إضافة وصل جديد • مكوى بغداد</h3>
+        <h3 id="modal-title" class="font-extrabold text-base text-slate-900">إضافة وصل جديد • مكوى بغداد</h3>
         <div class="flex items-center gap-2">
           <button
             type="button"
@@ -267,10 +267,15 @@
           <div id="order-lines-container" class="space-y-2"></div>
         </div>
 
-        <!-- معاينة تفاصيل الوصل -->
-        <div class="bg-teal-50/70 border border-teal-200/80 rounded-xl p-2.5">
-          <p class="text-[11px] font-bold text-teal-900 mb-1">تفاصيل القطع التي ستظهر في الوصل:</p>
-          <p id="items-summary-preview" class="text-xs text-slate-700 leading-relaxed">لم يتم تحديد قطع بعد.</p>
+        <!-- معاينة وتعديل مباشر لتفاصيل الوصل -->
+        <div class="bg-teal-50/70 border border-teal-200/80 rounded-xl p-2.5 space-y-1.5">
+          <p class="text-[11px] font-bold text-teal-900">تفاصيل القطع التي ستظهر في الوصل (قابلة للتعديل اليدوي أيضاً):</p>
+          <textarea
+            id="inp-items-manual"
+            rows="2"
+            placeholder="تظهر هنا تفاصيل القطع تلقائياً أو يمكنك تعديلها مباشرة..."
+            class="w-full bg-white border border-teal-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 leading-relaxed"
+          ></textarea>
         </div>
 
         <div>
@@ -295,7 +300,7 @@
         </div>
 
         <div class="flex gap-2 pt-1">
-          <button type="submit" class="flex-1 bg-teal-600 hover:bg-teal-500 text-white font-bold py-2.5 rounded-xl text-sm">
+          <button id="submit-order-btn" type="submit" class="flex-1 bg-teal-600 hover:bg-teal-500 text-white font-bold py-2.5 rounded-xl text-sm">
             حفظ الوصل
           </button>
           <button type="button" onclick="closeAddModal()" class="px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-sm">
@@ -303,6 +308,42 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- نافذة معاينة ومشاركة صورة الوصل -->
+  <div id="receipt-image-modal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl w-full max-w-md p-4 sm:p-5 shadow-xl space-y-3.5 my-auto max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <h3 class="font-extrabold text-sm text-slate-900">صورة الوصل • مكوى بغداد</h3>
+        <button type="button" onclick="closeReceiptImageModal()" class="text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="bg-slate-100 rounded-xl p-2 flex items-center justify-center">
+        <img id="receipt-preview-img" alt="صورة الوصل" class="max-h-96 rounded-lg shadow border border-slate-200 bg-white" />
+      </div>
+
+      <div class="flex flex-wrap gap-2 pt-1">
+        <button
+          type="button"
+          id="btn-share-receipt-img"
+          class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5"
+        >
+          <i data-lucide="share-2" class="w-4 h-4"></i>
+          <span>مشاركة الصورة</span>
+        </button>
+
+        <button
+          type="button"
+          id="btn-download-receipt-img"
+          class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5"
+        >
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span>تنزيل PNG</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -350,6 +391,9 @@
     let catalog = [];
     let orders = [];
     let lineIdCounter = 0;
+    let editingOrderId = null;
+    let isAutoSyncingItems = true;
+    let currentGeneratedImage = { blob: null, dataUrl: "", fileName: "receipt.png" };
 
     function escapeHTML(str) {
       return String(str || "")
@@ -484,6 +528,246 @@
         `• المدفوع: ${formatIQD(order.paid)}\n` +
         `• المتبقي: ${formatIQD(remaining)}`;
       openWhatsApp(order.phone, msg);
+    }
+
+    function wrapCanvasText(ctx, text, maxWidth) {
+      const words = String(text || "").split(" ");
+      const lines = [];
+      let currentLine = "";
+
+      for (const word of words) {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        if (ctx.measureText(testLine).width <= maxWidth || !currentLine) {
+          currentLine = testLine;
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      if (currentLine) lines.push(currentLine);
+      return lines.length ? lines : [""];
+    }
+
+    function buildReceiptImageData(order) {
+      const total = Number(order.total) || 0;
+      const paid = Number(order.paid) || 0;
+      const remaining = Math.max(0, total - paid);
+
+      const detailSegments = String(order.items || "")
+        .split(" | ")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const canvas = document.createElement("canvas");
+      const width = 760;
+      const ctx = canvas.getContext("2d");
+
+      ctx.font = "700 23px 'Cairo', sans-serif";
+      const wrappedDetailLines = [];
+      detailSegments.forEach((seg) => {
+        const parts = wrapCanvasText(ctx, `• ${seg}`, width - 130);
+        parts.forEach((p) => wrappedDetailLines.push(p));
+      });
+
+      const detailsHeight = Math.max(90, wrappedDetailLines.length * 36 + 34);
+      const height = 470 + detailsHeight;
+
+      canvas.width = width;
+      canvas.height = height;
+
+      // خلفية البطاقة
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(0, 0, width, height);
+
+      // إطار خارجي
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(24, 24, width - 48, height - 48, 28);
+      ctx.fill();
+      ctx.stroke();
+
+      // شريط الهوية العلوي - مكوى بغداد
+      const headerGrad = ctx.createLinearGradient(width - 24, 24, 24, 155);
+      headerGrad.addColorStop(0, "#0f766e");
+      headerGrad.addColorStop(1, "#0f172a");
+      ctx.fillStyle = headerGrad;
+      ctx.beginPath();
+      ctx.roundRect(24, 24, width - 48, 130, [28, 28, 0, 0]);
+      ctx.fill();
+
+      ctx.direction = "rtl";
+      ctx.textAlign = "right";
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "800 38px 'Cairo', sans-serif";
+      ctx.fillText("مكوى بغداد", width - 54, 82);
+
+      ctx.fillStyle = "#99f6e4";
+      ctx.font = "700 20px 'Cairo', sans-serif";
+      ctx.fillText("وصل استلام وتسليم الملابس", width - 54, 122);
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "800 28px 'Plus Jakarta Sans', 'Cairo', sans-serif";
+      ctx.fillText(`#${order.receiptNo}`, 54, 92);
+
+      // معلومات الزبون والتاريخ
+      ctx.textAlign = "right";
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "800 24px 'Cairo', sans-serif";
+      ctx.fillText(`الزبون: ${order.customer}`, width - 54, 202);
+
+      ctx.fillStyle = "#475569";
+      ctx.font = "700 20px 'Cairo', sans-serif";
+      if (order.phone) {
+        ctx.fillText(`الهاتف: ${order.phone}`, width - 54, 238);
+      }
+      ctx.fillText(`التاريخ: ${order.createdAt || order.dateKey}`, width - 54, order.phone ? 274 : 238);
+
+      // صندوق التفاصيل
+      const boxTop = order.phone ? 302 : 268;
+      ctx.fillStyle = "#f1f5f9";
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(48, boxTop, width - 96, detailsHeight, 18);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#0f766e";
+      ctx.font = "800 21px 'Cairo', sans-serif";
+      ctx.fillText("تفاصيل القطع والخدمات:", width - 68, boxTop + 34);
+
+      ctx.fillStyle = "#1e293b";
+      ctx.font = "700 22px 'Cairo', sans-serif";
+      wrappedDetailLines.forEach((lineText, idx) => {
+        ctx.fillText(lineText, width - 68, boxTop + 70 + idx * 36);
+      });
+
+      // ملخص الحساب
+      const summaryTop = boxTop + detailsHeight + 24;
+
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "800 24px 'Cairo', sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText("المبلغ الكلي:", width - 54, summaryTop + 26);
+      ctx.textAlign = "left";
+      ctx.fillText(formatIQD(total), 54, summaryTop + 26);
+
+      ctx.fillStyle = "#0f766e";
+      ctx.textAlign = "right";
+      ctx.fillText("المدفوع:", width - 54, summaryTop + 66);
+      ctx.textAlign = "left";
+      ctx.fillText(formatIQD(paid), 54, summaryTop + 66);
+
+      ctx.fillStyle = remaining > 0 ? "#b45309" : "#15803d";
+      ctx.textAlign = "right";
+      ctx.fillText("المتبقي (الدَين):", width - 54, summaryTop + 106);
+      ctx.textAlign = "left";
+      ctx.fillText(formatIQD(remaining), 54, summaryTop + 106);
+
+      const dataUrl = canvas.toDataURL("image/png");
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+          resolve({
+            blob,
+            dataUrl,
+            fileName: `makwa-baghdad-receipt-${order.receiptNo}.png`
+          });
+        }, "image/png");
+      });
+    }
+
+    function downloadReceiptBlob(blob, dataUrl, fileName) {
+      const link = document.createElement("a");
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+      } else {
+        link.href = dataUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+    }
+
+    async function shareOrDownloadReceiptImage(order) {
+      const generated = await buildReceiptImageData(order);
+      currentGeneratedImage = generated;
+
+      const previewImg = document.getElementById("receipt-preview-img");
+      if (previewImg) previewImg.src = generated.dataUrl;
+
+      const shareBtn = document.getElementById("btn-share-receipt-img");
+      const downloadBtn = document.getElementById("btn-download-receipt-img");
+
+      if (downloadBtn) {
+        downloadBtn.onclick = () => {
+          downloadReceiptBlob(generated.blob, generated.dataUrl, generated.fileName);
+          showToast("تم تنزيل صورة الوصل");
+        };
+      }
+
+      if (shareBtn) {
+        shareBtn.onclick = async () => {
+          if (generated.blob && navigator.canShare && typeof File !== "undefined") {
+            const file = new File([generated.blob], generated.fileName, { type: "image/png" });
+            if (navigator.canShare({ files: [file] })) {
+              try {
+                await navigator.share({
+                  title: `وصل مكوى بغداد #${order.receiptNo}`,
+                  text: `وصل #${order.receiptNo} - مكوى بغداد (${order.customer})`,
+                  files: [file]
+                });
+                return;
+              } catch (err) {
+                if (err && err.name === "AbortError") return;
+              }
+            }
+          }
+          downloadReceiptBlob(generated.blob, generated.dataUrl, generated.fileName);
+          showToast("تم حفظ الصورة، يمكنك إرسالها عبر واتساب الأعمال");
+        };
+      }
+
+      document.getElementById("receipt-image-modal").classList.remove("hidden");
+      if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+      }
+
+      if (generated.blob && navigator.canShare && typeof File !== "undefined") {
+        const file = new File([generated.blob], generated.fileName, { type: "image/png" });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: `وصل مكوى بغداد #${order.receiptNo}`,
+              text: `وصل #${order.receiptNo} - مكوى بغداد (${order.customer})`,
+              files: [file]
+            });
+          } catch (err) {
+            if (err && err.name !== "AbortError") {
+              console.warn("Share fallback to preview modal:", err);
+            }
+          }
+        }
+      }
+    }
+
+    async function openOrderReceiptImage(orderId) {
+      const order = orders.find((o) => o.id === orderId);
+      if (!order) return;
+      await shareOrDownloadReceiptImage(order);
+    }
+
+    function closeReceiptImageModal() {
+      document.getElementById("receipt-image-modal").classList.add("hidden");
     }
 
     function switchTab(tabName) {
@@ -728,6 +1012,7 @@
     }
 
     function addOrderLineRow(initialQty = 1) {
+      isAutoSyncingItems = true;
       lineIdCounter += 1;
       const rowId = `order-line-${lineIdCounter}`;
       const defaultItem = catalog[0];
@@ -746,12 +1031,14 @@
     }
 
     function removeOrderLineRow(rowId) {
+      isAutoSyncingItems = true;
       const el = document.getElementById(rowId);
       if (el) el.remove();
       updateOrderSummary();
     }
 
     function onOrderLineSelectionChange(rowId) {
+      isAutoSyncingItems = true;
       const row = document.getElementById(rowId);
       if (!row) return;
       const itemId = row.querySelector(".line-item")?.value || "";
@@ -819,22 +1106,23 @@
 
     function updateOrderSummary() {
       const { lines, totalAmount } = getOrderLinesData();
-      const note = (document.getElementById("inp-note")?.value || "").trim();
-      const summaryEl = document.getElementById("items-summary-preview");
+      const manualBox = document.getElementById("inp-items-manual");
 
-      if (lines.length) {
-        summaryEl.innerHTML =
-          lines.map((l) => `• ${escapeHTML(l)}`).join("<br>") +
-          (note ? `<br><span class="text-slate-500">ملاحظة: ${escapeHTML(note)}</span>` : "");
-      } else {
-        summaryEl.textContent = note ? `ملاحظة: ${note}` : "لم يتم تحديد قطع بعد.";
+      if (isAutoSyncingItems && manualBox) {
+        manualBox.value = lines.join(" | ");
       }
 
-      document.getElementById("inp-total").value = totalAmount;
+      if (!editingOrderId || isAutoSyncingItems) {
+        document.getElementById("inp-total").value = totalAmount;
+      }
       updateRemainingPreview();
     }
 
     function openAddModal() {
+      editingOrderId = null;
+      isAutoSyncingItems = true;
+      document.getElementById("modal-title").textContent = "إضافة وصل جديد • مكوى بغداد";
+      document.getElementById("submit-order-btn").textContent = "حفظ الوصل";
       document.getElementById("order-form").reset();
       document.getElementById("inp-paid").value = 0;
       document.getElementById("remaining-preview").textContent = "0 د.ع";
@@ -844,7 +1132,43 @@
       document.getElementById("add-modal").classList.remove("hidden");
     }
 
+    function openEditModal(orderId) {
+      const target = orders.find((o) => o.id === orderId);
+      if (!target) return;
+
+      editingOrderId = target.id;
+      isAutoSyncingItems = false;
+
+      document.getElementById("modal-title").textContent = `تعديل الوصل #${target.receiptNo} • مكوى بغداد`;
+      document.getElementById("submit-order-btn").textContent = "حفظ التعديلات";
+      document.getElementById("price-settings-panel").classList.add("hidden");
+
+      document.getElementById("inp-customer").value = target.customer || "";
+      document.getElementById("inp-phone").value = target.phone || "";
+      document.getElementById("inp-note").value = "";
+      document.getElementById("order-lines-container").innerHTML = "";
+
+      const manualBox = document.getElementById("inp-items-manual");
+      if (manualBox) {
+        manualBox.value = target.items || "";
+        manualBox.oninput = () => {
+          isAutoSyncingItems = false;
+        };
+      }
+
+      document.getElementById("inp-total").value = Number(target.total) || 0;
+      document.getElementById("inp-paid").value = Number(target.paid) || 0;
+      updateRemainingPreview();
+
+      document.getElementById("add-modal").classList.remove("hidden");
+      if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+      }
+    }
+
     function closeAddModal() {
+      editingOrderId = null;
+      isAutoSyncingItems = true;
       document.getElementById("add-modal").classList.add("hidden");
     }
 
@@ -860,22 +1184,46 @@
       const customer = document.getElementById("inp-customer").value.trim();
       const phone = document.getElementById("inp-phone").value.trim();
       const note = (document.getElementById("inp-note")?.value || "").trim();
+      const manualBox = document.getElementById("inp-items-manual");
       const { lines } = getOrderLinesData();
       const total = Math.max(0, Number(document.getElementById("inp-total").value) || 0);
       const paid = Math.max(0, Number(document.getElementById("inp-paid").value) || 0);
 
-      let itemsText = lines.join(" | ");
-      if (note) {
+      let itemsText = (manualBox?.value || "").trim();
+      if (!itemsText) {
+        itemsText = lines.join(" | ");
+      }
+      if (note && !itemsText.includes(note)) {
         itemsText = itemsText ? `${itemsText} — ملاحظة: ${note}` : `ملاحظة: ${note}`;
       }
 
       if (!customer || !itemsText) {
-        showToast("يرجى إدخال اسم الزبون وتحديد قطعة واحدة على الأقل");
+        showToast("يرجى إدخال اسم الزبون وتفاصيل القطع");
         return;
       }
 
       if (paid > total) {
         showToast("المبلغ المدفوع أكبر من المبلغ الكلي");
+        return;
+      }
+
+      if (editingOrderId) {
+        const idx = orders.findIndex((o) => o.id === editingOrderId);
+        if (idx === -1) return;
+        const prev = orders[idx];
+        orders[idx] = {
+          ...prev,
+          customer,
+          phone,
+          items: itemsText,
+          total,
+          paid
+        };
+        if (!saveOrders()) return;
+        const receiptNo = prev.receiptNo;
+        closeAddModal();
+        renderAll();
+        showToast(`تم تحديث الوصل #${receiptNo}`);
         return;
       }
 
@@ -959,11 +1307,29 @@
           <div class="flex flex-wrap items-center gap-2 pt-1">
             <button
               type="button"
+              onclick="openOrderReceiptImage('${safeId}')"
+              class="bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1"
+            >
+              <i data-lucide="image" class="w-3.5 h-3.5"></i>
+              <span>صورة وصل</span>
+            </button>
+
+            <button
+              type="button"
               onclick="sendOrderWhatsApp('${safeId}')"
               class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1"
             >
               <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
               <span>واتساب</span>
+            </button>
+
+            <button
+              type="button"
+              onclick="openEditModal('${safeId}')"
+              class="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1"
+            >
+              <i data-lucide="pencil" class="w-3.5 h-3.5 text-teal-700"></i>
+              <span>تعديل</span>
             </button>
 
             ${remaining > 0 ? `
