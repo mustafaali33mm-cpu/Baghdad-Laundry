@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Baghdad Laundry | نظام إدارة اللوندري</title>
+  <title>مكوى بغداد | نظام إدارة اللوندري</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -39,11 +39,11 @@
   <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
     <div class="max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between gap-2">
       <div class="flex items-center gap-2.5">
-        <span class="bg-teal-500/20 border border-teal-400/40 text-teal-300 text-xs font-bold px-2.5 py-1 rounded-full num-en">
-          Baghdad Laundry
+        <span class="bg-teal-500/20 border border-teal-400/40 text-teal-300 text-xs font-extrabold px-2.5 py-1 rounded-full">
+          مكوى بغداد
         </span>
         <div>
-          <h1 id="page-title" class="text-lg font-extrabold leading-tight">لوحة التحكم</h1>
+          <h1 id="page-title" class="text-lg font-extrabold leading-tight">مكوى بغداد • لوحة التحكم</h1>
           <p id="current-date" class="text-xs text-slate-300"></p>
         </div>
       </div>
@@ -64,8 +64,8 @@
     <section id="view-dashboard" class="space-y-4">
       <div class="bg-gradient-to-l from-teal-700 to-slate-900 text-white rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <p class="text-teal-200 text-xs font-semibold">إدارة المحل والطلبات والديون</p>
-          <h2 class="text-xl font-extrabold mt-0.5">أهلاً بك في نظام Baghdad Laundry</h2>
+          <p class="text-teal-200 text-xs font-bold">مكوى بغداد • إدارة المحل والطلبات والديون</p>
+          <h2 class="text-xl font-extrabold mt-0.5">أهلاً بك في مكوى بغداد</h2>
           <p class="text-xs text-slate-200 mt-1">البيانات وتسعيرة الخدمات محفوظة محلياً على جهازك.</p>
         </div>
         <button
@@ -78,7 +78,7 @@
         </button>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm">
           <div class="flex items-center justify-between text-slate-500 text-sm mb-2">
             <span>مبيعات اليوم (المدفوع)</span>
@@ -111,29 +111,11 @@
           <div id="stat-total-debts" class="text-2xl font-extrabold text-amber-700 num-en">0 د.ع</div>
           <p id="stat-debts-count" class="text-xs text-amber-700/80 mt-1">0 وصل عليه متبقي</p>
         </div>
-
-        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm">
-          <div class="flex items-center justify-between text-slate-500 text-sm mb-2">
-            <span>تواصل واتساب المغسلة</span>
-            <span class="p-2 rounded-xl bg-emerald-50 text-emerald-700">
-              <i data-lucide="message-circle" class="w-5 h-5"></i>
-            </span>
-          </div>
-          <p class="text-sm font-bold text-slate-800 mb-2.5">مراسلة الزبائن أو متابعة الطلبات</p>
-          <button
-            type="button"
-            onclick="contactShopWhatsApp()"
-            class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold py-2 px-3 rounded-xl flex items-center justify-center gap-2 transition"
-          >
-            <i data-lucide="send" class="w-4 h-4"></i>
-            <span>فتح واتساب المغسلة</span>
-          </button>
-        </div>
       </div>
 
       <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="font-bold text-slate-800">أحدث الوصولات</h3>
+          <h3 class="font-bold text-slate-800">أحدث الوصولات • مكوى بغداد</h3>
           <button type="button" onclick="switchTab('orders')" class="text-xs font-bold text-teal-700 hover:underline">
             عرض الكل
           </button>
@@ -169,7 +151,7 @@
     <section id="view-debts" class="hidden space-y-4">
       <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between">
         <div>
-          <p class="text-xs text-amber-800 font-semibold">مجموع الديون المستحقة</p>
+          <p class="text-xs text-amber-800 font-semibold">مجموع الديون المستحقة • مكوى بغداد</p>
           <p id="debts-tab-total" class="text-xl font-extrabold text-amber-900 num-en">0 د.ع</p>
         </div>
         <i data-lucide="alert-circle" class="w-7 h-7 text-amber-600"></i>
@@ -182,15 +164,6 @@
     </section>
 
   </main>
-
-  <button
-    type="button"
-    onclick="contactShopWhatsApp()"
-    title="تواصل عبر واتساب"
-    class="fixed bottom-20 left-4 z-30 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition"
-  >
-    <i data-lucide="message-circle" class="w-6 h-6"></i>
-  </button>
 
   <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 z-30 shadow-lg">
     <div class="max-w-4xl mx-auto grid grid-cols-4 text-center">
@@ -217,7 +190,7 @@
   <div id="add-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl w-full max-w-xl p-4 sm:p-5 shadow-xl space-y-4 my-auto max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="font-extrabold text-base text-slate-900">إضافة وصل جديد</h3>
+        <h3 class="font-extrabold text-base text-slate-900">إضافة وصل جديد • مكوى بغداد</h3>
         <div class="flex items-center gap-2">
           <button
             type="button"
@@ -225,7 +198,7 @@
             class="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1"
           >
             <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-teal-700"></i>
-            <span>تثبيت الأسعار</span>
+            <span>تثبيت الأسعار والقطع</span>
           </button>
           <button type="button" onclick="closeAddModal()" class="text-slate-400 hover:text-slate-700">
             <i data-lucide="x" class="w-5 h-5"></i>
@@ -233,23 +206,32 @@
         </div>
       </div>
 
-      <!-- لوحة تثبيت وتعديل الأسعار الثابتة لكل قطعة وخدمة -->
-      <div id="price-settings-panel" class="hidden border border-teal-200 bg-teal-50/50 rounded-2xl p-3 space-y-2.5">
-        <div class="flex items-center justify-between gap-2">
+      <!-- لوحة إدارة القطع وتثبيت الأسعار من داخل الموقع -->
+      <div id="price-settings-panel" class="hidden border border-teal-200 bg-teal-50/50 rounded-2xl p-3 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <p class="text-xs font-extrabold text-teal-950">جدول الأسعار الثابتة للقطع والخدمات</p>
-            <p class="text-[11px] text-slate-600">عدّل السعر مرة واحدة وسيظهر تلقائياً عند اختيار القطعة والخدمة</p>
+            <p class="text-xs font-extrabold text-teal-950">إضافة وتعديل القطع وتسعيرة الخدمات</p>
+            <p class="text-[11px] text-slate-600">أضف أي قطعة جديدة أو غيّر الأسعار وسيُحفظ تلقائياً</p>
           </div>
-          <button
-            type="button"
-            onclick="addNewCatalogItem()"
-            class="bg-teal-700 hover:bg-teal-600 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 shrink-0"
-          >
-            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-            <span>قطعة جديدة</span>
-          </button>
+          <div class="flex items-center gap-1.5">
+            <button
+              type="button"
+              onclick="resetDefaultCatalog()"
+              class="bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-[11px] font-bold px-2 py-1.5 rounded-lg"
+            >
+              افتراضي
+            </button>
+            <button
+              type="button"
+              onclick="addNewCatalogItem()"
+              class="bg-teal-700 hover:bg-teal-600 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 shrink-0"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>إضافة قطعة جديدة</span>
+            </button>
+          </div>
         </div>
-        <div id="catalog-editor-list" class="space-y-2 max-h-56 overflow-y-auto pr-0.5"></div>
+        <div id="catalog-editor-list" class="space-y-2 max-h-60 overflow-y-auto pr-0.5"></div>
       </div>
 
       <form id="order-form" onsubmit="handleSaveOrder(event)" class="space-y-3.5">
@@ -278,7 +260,7 @@
               class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 shrink-0"
             >
               <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-              <span>إضافة قطعة</span>
+              <span>سطر قطعة</span>
             </button>
           </div>
 
@@ -327,10 +309,9 @@
   <div id="toast" class="hidden fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg"></div>
 
   <script>
-    const SHOP_WHATSAPP_NUMBER = "9647000000000";
     const STORAGE_KEY = "baghdad_laundry_orders_v3";
     const LEGACY_STORAGE_KEYS = ["baghdad_laundry_orders_v2", "baghdad_laundry_orders_v1"];
-    const CATALOG_KEY = "baghdad_laundry_catalog_v1";
+    const CATALOG_KEY = "baghdad_laundry_catalog_v2";
 
     const SERVICE_TYPES = [
       { key: "wash_iron", label: "غسل وكوي" },
@@ -481,17 +462,13 @@
     }
 
     function openWhatsApp(phone, text) {
-      const targetPhone = formatPhoneForWhatsApp(phone) || formatPhoneForWhatsApp(SHOP_WHATSAPP_NUMBER);
+      const targetPhone = formatPhoneForWhatsApp(phone);
       if (!targetPhone) {
-        showToast("يرجى ضبط رقم الواتساب أولاً");
+        showToast("أدخل رقم هاتف الزبون أولاً للمراسلة عبر واتساب");
         return;
       }
       const url = `https://wa.me/${targetPhone}?text=${encodeURIComponent(text)}`;
       window.open(url, "_blank", "noopener,noreferrer");
-    }
-
-    function contactShopWhatsApp() {
-      openWhatsApp(SHOP_WHATSAPP_NUMBER, "مرحباً مغسلة بغداد (Baghdad Laundry)، أود التواصل بخصوص طلباتي.");
     }
 
     function sendOrderWhatsApp(orderId) {
@@ -500,7 +477,7 @@
       const remaining = Math.max(0, (Number(order.total) || 0) - (Number(order.paid) || 0));
       const msg =
         `مرحباً ${order.customer} 👋\n` +
-        `تفاصيل وصلك من *مغسلة بغداد (Baghdad Laundry)*:\n` +
+        `تفاصيل وصلك من *مكوى بغداد*:\n` +
         `• رقم الوصل: #${order.receiptNo}\n` +
         `• التفاصيل:\n${order.items}\n` +
         `• الكلي: ${formatIQD(order.total)}\n` +
@@ -512,10 +489,10 @@
     function switchTab(tabName) {
       const tabs = ["dashboard", "orders", "debts", "customers"];
       const titles = {
-        dashboard: "لوحة التحكم",
-        orders: "سجل الوصولات",
-        debts: "إدارة الديون",
-        customers: "سجل الزبائن"
+        dashboard: "مكوى بغداد • لوحة التحكم",
+        orders: "مكوى بغداد • سجل الوصولات",
+        debts: "مكوى بغداد • إدارة الديون",
+        customers: "مكوى بغداد • سجل الزبائن"
       };
 
       tabs.forEach((t) => {
@@ -531,7 +508,7 @@
         }
       });
 
-      document.getElementById("page-title").textContent = titles[tabName] || "Baghdad Laundry";
+      document.getElementById("page-title").textContent = titles[tabName] || "مكوى بغداد";
       renderAll();
     }
 
@@ -558,14 +535,14 @@
       editorList.innerHTML = catalog
         .map(
           (item, idx) => `
-            <div class="bg-white border border-slate-200 rounded-xl p-2.5 space-y-2">
+            <div data-catalog-id="${escapeHTML(item.id)}" class="bg-white border border-slate-200 rounded-xl p-2.5 space-y-2">
               <div class="flex items-center justify-between gap-2">
                 <input
                   type="text"
                   value="${escapeHTML(item.name)}"
                   oninput="updateCatalogItem(${idx}, 'name', this.value)"
-                  placeholder="اسم القطعة"
-                  class="flex-1 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-extrabold text-slate-800"
+                  placeholder="اكتب اسم القطعة (مثلاً: بشت)"
+                  class="flex-1 border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-extrabold text-slate-800"
                 />
                 ${catalog.length > 1 ? `
                   <button
@@ -632,18 +609,27 @@
         target.prices[field] = Math.max(0, Number(value) || 0);
       }
       saveCatalog();
-      syncAllLineSelectsAndPrices();
+      syncAllLineSelectsAndPrices(false);
     }
 
     function addNewCatalogItem() {
-      catalog.push({
+      const newItem = {
         id: `custom_${Date.now()}`,
         name: "قطعة جديدة",
         prices: { wash_iron: 2000, iron_only: 1000, wash_only: 1500 }
-      });
+      };
+      catalog.push(newItem);
       saveCatalog();
       renderCatalogEditor();
-      syncAllLineSelectsAndPrices();
+      syncAllLineSelectsAndPrices(true);
+
+      const newRow = document.querySelector(`#catalog-editor-list > div[data-catalog-id="${newItem.id}"]`);
+      const nameInput = newRow?.querySelector('input[type="text"]');
+      if (nameInput) {
+        nameInput.focus();
+        nameInput.select();
+      }
+      showToast("تمت إضافة قطعة جديدة، اكتب اسمها وحدد أسعارها");
     }
 
     function removeCatalogItem(index) {
@@ -651,7 +637,15 @@
       catalog.splice(index, 1);
       saveCatalog();
       renderCatalogEditor();
-      syncAllLineSelectsAndPrices();
+      syncAllLineSelectsAndPrices(true);
+    }
+
+    function resetDefaultCatalog() {
+      catalog = normalizeCatalog(null);
+      saveCatalog();
+      renderCatalogEditor();
+      syncAllLineSelectsAndPrices(true);
+      showToast("تمت استعادة القطع والأسعار الافتراضية");
     }
 
     function buildItemOptionsHTML(selectedId) {
@@ -773,7 +767,7 @@
       updateOrderSummary();
     }
 
-    function syncAllLineSelectsAndPrices() {
+    function syncAllLineSelectsAndPrices(rebuildOptions) {
       const rows = Array.from(document.querySelectorAll("#order-lines-container > div"));
       rows.forEach((row) => {
         const itemSelect = row.querySelector(".line-item");
@@ -786,8 +780,15 @@
         const stillExists = catalog.some((c) => c.id === currentItemId);
         const nextItemId = stillExists ? currentItemId : (catalog[0]?.id || "");
 
-        itemSelect.innerHTML = buildItemOptionsHTML(nextItemId);
-        serviceSelect.innerHTML = buildServiceOptionsHTML(currentService);
+        if (rebuildOptions) {
+          itemSelect.innerHTML = buildItemOptionsHTML(nextItemId);
+          serviceSelect.innerHTML = buildServiceOptionsHTML(currentService);
+        } else {
+          Array.from(itemSelect.options).forEach((opt) => {
+            const found = catalog.find((c) => c.id === opt.value);
+            if (found) opt.textContent = found.name;
+          });
+        }
         priceInput.value = getCatalogPrice(nextItemId, currentService);
       });
       updateOrderSummary();
@@ -900,7 +901,7 @@
       }
       closeAddModal();
       renderAll();
-      showToast(`تم حفظ الوصل #${nextReceiptNo}`);
+      showToast(`تم حفظ الوصل #${nextReceiptNo} • مكوى بغداد`);
     }
 
     function settleOrderDebt(orderId) {
@@ -1079,7 +1080,7 @@
                   </div>
                   <button
                     type="button"
-                    onclick="openWhatsApp('${escapeHTML(c.phone)}', 'مرحباً ${escapeHTML(c.customer)} من مغسلة بغداد (Baghdad Laundry)')"
+                    onclick="openWhatsApp('${escapeHTML(c.phone)}', 'مرحباً ${escapeHTML(c.customer)} من مكوى بغداد')"
                     class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shrink-0"
                   >
                     <i data-lucide="message-circle" class="w-4 h-4"></i>
